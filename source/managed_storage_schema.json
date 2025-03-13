@@ -1,0 +1,20 @@
+{
+    "type": "object",
+    "properties": {
+      "kioskUrl": {
+        "type": "string",
+        "description": "Default URL for the kiosk"
+      },
+      "marketingUrl": {
+        "type": "string",
+        "description": "URL to display when the kiosk is idle"
+      },
+      "idleTimeout": {
+        "type": "integer",
+        "description": "Idle time before redirect (in seconds)",
+        "minimum": 10,
+        "default": 60
+      }
+    }
+  }
+  
