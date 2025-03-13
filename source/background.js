@@ -85,7 +85,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Received message:", message);
 
     if (message.type === "user_active") {
-        console.log("Spoolstock: User activity detected. Redirecting to kiosk...");
+        console.log("User activity detected. Redirecting to kiosk...");
 
         // Fetch the latest kiosk URL from storage
         chrome.storage.sync.get(["kioskUrl"], (data) => {
@@ -129,14 +129,25 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     }
 });
 
-// Inject content script dynamically based on stored marketing URL
-function injectContentScript(tabId, url) {
-    console.log("Checking if content script should be injected into:", url);
+function normalizeUrl(url) {
+    try {
+        let parsedUrl = new URL(url);
+        // Remove "www." to standardize matching
+        return parsedUrl.hostname.replace(/^www\./, '') + parsedUrl.pathname;
+    } catch (error) {
+        console.warn("Invalid URL format:", url);
+        return url;
+    }
+}
 
+// Inject content script dynamically based on normalized stored marketing URL
+function injectContentScript(tabId, url) {
     chrome.storage.sync.get(["marketingUrl"], (data) => {
         let latestMarketingUrl = data.marketingUrl || "https://your-marketing-url.com";
+        let normalizedMarketingUrl = normalizeUrl(latestMarketingUrl);
+        let normalizedTabUrl = normalizeUrl(url);
 
-        if (url.startsWith(latestMarketingUrl)) {
+        if (normalizedTabUrl.startsWith(normalizedMarketingUrl)) {
             console.log("Injecting content script into marketing page:", url);
             chrome.scripting.executeScript({
                 target: { tabId: tabId },
@@ -161,6 +172,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
+
+// Listen for tab updates and inject content script if needed
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status === "complete" && tab.url) {
+        injectContentScript(tabId, tab.url);
+    }
+});
+
 // Inject content script immediately if already on the marketing page
 chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
     if (tabs.length > 0) {
@@ -168,6 +187,37 @@ chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         injectContentScript(activeTab.id, activeTab.url);
     }
 });
+
+// Function to open the Kiosk URL on ChromeOS startup
+function openKioskOnStartup() {
+    console.log("ChromeOS Kiosk Mode detected. Launching kiosk page...");
+
+    // Load kiosk URL from managed storage (Admin Console) or user settings
+    chrome.storage.managed.get(["kioskUrl"], (managedData) => {
+        chrome.storage.sync.get(["kioskUrl"], (userData) => {
+            let kioskUrl = managedData.kioskUrl || userData.kioskUrl || "https://your-kiosk-url.com";
+
+            console.log("Opening kiosk page:", kioskUrl);
+
+            // Check if the kiosk URL is already open to prevent duplicate tabs
+            chrome.tabs.query({}, (tabs) => {
+                let isKioskOpen = tabs.some(tab => tab.url && tab.url.startsWith(kioskUrl));
+
+                if (!isKioskOpen) {
+                    console.log("Kiosk URL is not open. Opening now...");
+                    chrome.tabs.create({ url: kioskUrl });
+                } else {
+                    console.log("Kiosk page is already open. No need to open another tab.");
+                }
+            });
+        });
+    });
+}
+
+// Run this when the ChromeOS Kiosk starts
+chrome.runtime.onStartup.addListener(openKioskOnStartup);
+
+
 
 
 
