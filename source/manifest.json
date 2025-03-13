@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Kiosk Idle Redirect",
-    "version": "1.3",
+    "version": "1.0",
     "description": "Redirects to marketing content when idle, with enable/disable toggle",
     "permissions": ["idle", "tabs", "scripting", "storage"],
     "background": {
