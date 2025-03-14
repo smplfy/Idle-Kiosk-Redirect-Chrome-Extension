@@ -6,17 +6,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     let openKioskButton = document.getElementById("openKiosk");
     let saveButton = document.getElementById("save");
 
+    // ✅ Get Managed Storage (Admin Console Policies)
+    let managedData = await new Promise((resolve) =>
+        chrome.storage.managed.get(["kioskUrl", "marketingUrl", "idleTimeout", "enableRedirect"], resolve)
+    );
+    console.log("📢 Managed Storage Data (Options Page):", managedData);
+
+    // ✅ Get User Storage (Options Page Settings)
     let userData = await new Promise((resolve) =>
         chrome.storage.sync.get(["kioskUrl", "marketingUrl", "idleTimeout", "enableRedirect"], resolve)
     );
+    console.log("📢 User Storage Data (Options Page):", userData);
 
-    // Load settings, defaulting to stored values or fallback defaults
-    kioskInput.value = userData.kioskUrl || "https://your-kiosk-url.com";
-    marketingInput.value = userData.marketingUrl || "https://your-marketing-url.com";
-    idleTimeoutInput.value = userData.idleTimeout || 60;
-    let isEnabled = userData.enableRedirect !== false; // Default: enabled
+    // ✅ Load settings with priority: Admin Console > User Settings > Defaults
+    let kioskUrl = managedData.kioskUrl ?? userData.kioskUrl ?? "https://your-kiosk-url.com";
+    let marketingUrl = managedData.marketingUrl ?? userData.marketingUrl ?? "https://your-marketing-url.com";
+    let idleTimeout = managedData.idleTimeout ?? userData.idleTimeout ?? 60;
+    let isEnabled = managedData.enableRedirect ?? userData.enableRedirect ?? true;
 
-    // Update button appearance
+    // ✅ Set input values
+    kioskInput.value = kioskUrl;
+    marketingInput.value = marketingUrl;
+    idleTimeoutInput.value = idleTimeout;
+
+    // 🚨 If values are set by Admin Console, disable inputs to prevent user changes
+    if (managedData.kioskUrl) kioskInput.disabled = true;
+    if (managedData.marketingUrl) marketingInput.disabled = true;
+    if (managedData.idleTimeout) idleTimeoutInput.disabled = true;
+    if (managedData.enableRedirect !== undefined) toggleRedirectButton.disabled = true;
+
+    // ✅ Update Button Appearance
     function updateButtonState() {
         if (isEnabled) {
             toggleRedirectButton.textContent = "Disable Idle Redirect";
@@ -29,7 +48,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     updateButtonState();
 
-    // Toggle redirect state
+    // ✅ Toggle redirect state
     toggleRedirectButton.addEventListener("click", function () {
         isEnabled = !isEnabled;
         chrome.storage.sync.set({ enableRedirect: isEnabled }, function () {
@@ -37,7 +56,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     });
 
-    // Open kiosk manually when clicking "Open Kiosk"
+    // ✅ Open kiosk manually when clicking "Open Kiosk"
     openKioskButton.addEventListener("click", function () {
         let kioskUrl = kioskInput.value.trim();
         if (kioskUrl) {
@@ -54,7 +73,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
+    // ✅ Save Button (Only Works If No Admin Policies Are Applied)
     saveButton.addEventListener("click", function () {
+        if (kioskInput.disabled || marketingInput.disabled || idleTimeoutInput.disabled) {
+            alert("These settings are enforced by the administrator and cannot be changed.");
+            return;
+        }
+
         let timeoutValue = parseInt(idleTimeoutInput.value, 10);
         if (isNaN(timeoutValue) || timeoutValue < 10 || timeoutValue > 600) {
             alert("Idle timeout must be between 10 and 600 seconds.");

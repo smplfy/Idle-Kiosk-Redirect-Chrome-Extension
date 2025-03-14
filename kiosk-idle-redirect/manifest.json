@@ -1,26 +1,27 @@
 {
-  "manifest_version": 3,
-  "name": "Kiosk Idle Redirect",
-  "version": "1.4",
-  "description": "Redirects the active tab to a marketing page when idle and back to the kiosk page when active.",
-  "permissions": ["idle", "tabs", "scripting", "storage"],
-  "background": {
-      "service_worker": "background.js"
-  },
-  "host_permissions": ["<all_urls>"],
-  "action": {
-      "default_title": "Kiosk Idle Redirect"
-  },
-  "options_page": "options.html",
-  "minimum_chrome_version": "88",
-  "storage": {
-      "managed_schema": "managed_storage_schema.json"
-  },
-  "content_scripts": [
-      {
-          "matches": ["*://your-kiosk-url.com/*", "*://your-marketing-url.com/*"],
-          "js": ["content.js"],
-          "run_at": "document_start"
-      }
-  ]
+    "manifest_version": 3,
+    "name": "Kiosk Idle Redirect",
+    "author": {
+        "email": "dbusse@google.com"
+    },
+    "version": "1.0",
+    "description": "Redirects the active tab to a marketing page when idle and back to the kiosk page when active.",
+    "permissions": ["idle", "tabs", "scripting", "storage", "management"],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "host_permissions": ["<all_urls>"],
+    "action": {
+        "default_title": "Kiosk Idle Redirect"
+    },
+    "options_page": "options.html",
+    "minimum_chrome_version": "88",
+    "storage": {
+        "managed_schema": "managed_storage_schema.json"
+    },
+    "icons": {
+        "128": "icon128.png"
+    }
 }
+  
+  

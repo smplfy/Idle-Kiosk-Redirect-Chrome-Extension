@@ -1,20 +1,24 @@
 {
-    "type": "object",
-    "properties": {
+  "type": "object",
+  "properties": {
       "kioskUrl": {
-        "type": "string",
-        "description": "Default URL for the kiosk"
+          "type": "string",
+          "description": "Default URL for the kiosk"
       },
       "marketingUrl": {
-        "type": "string",
-        "description": "URL to display when the kiosk is idle"
+          "type": "string",
+          "description": "URL to display when the kiosk is idle"
       },
       "idleTimeout": {
-        "type": "integer",
-        "description": "Idle time before redirect (in seconds)",
-        "minimum": 10,
-        "default": 60
+          "type": "integer",
+          "description": "Idle time before redirect (in seconds)",
+          "minimum": 10,
+          "default": 60
+      },
+      "enableRedirect": {
+          "type": "boolean",
+          "description": "Enable or disable idle redirection",
+          "default": true
       }
-    }
   }
-  
+}
